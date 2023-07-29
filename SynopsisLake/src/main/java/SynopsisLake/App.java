@@ -1,4 +1,4 @@
-package SynopsisLake.SynopsisLake;
+package SynopsisLake;
 
 public class App {
 

@@ -1,4 +1,4 @@
-package SynopsisLake.SynopsisLake;
+package SynopsisLake;
 
 import java.io.BufferedReader;
 import java.io.File;
