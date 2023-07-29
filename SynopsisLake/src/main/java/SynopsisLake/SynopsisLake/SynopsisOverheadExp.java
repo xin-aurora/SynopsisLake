@@ -49,8 +49,8 @@ public class SynopsisOverheadExp {
 		sparkCond.set("spark.memory.offHeap.size", "16g");
 		sparkCond.set("spark.rpc.message.maxSize", "1024");
 //		// Set Spark master to local if not already set
-//		if (!sparkCond.contains("spark.master"))
-//			sparkCond.setMaster("local[4]");
+		if (!sparkCond.contains("spark.master"))
+			sparkCond.setMaster("local[*]");
 		JavaSparkContext sc = new JavaSparkContext(sparkCond);
 
 		SparkSession spark = SparkSession.builder().config(sc.getConf()).getOrCreate();
@@ -221,7 +221,7 @@ public class SynopsisOverheadExp {
 		int synopsisType = 4;
 		int synopsisResolution = 128;
 
-		String HDFSURI = "hdfs://localhost:9000";
+		String HDFSURI = "hdfs://localhost:9000/";
 		String expName = "test";
 		
 		int writeDataFileInt = 0;
