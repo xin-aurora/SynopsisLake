@@ -1,6 +1,10 @@
 # SynopsisLake
 The is a temporary repository for ICDE 2024 submission
 
+# Query Throughput Experiment Results Correction
+
+
+
 To run the loading experiment:
 
 Please first compile the project:
