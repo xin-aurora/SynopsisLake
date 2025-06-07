@@ -11,57 +11,55 @@ public class UniformSamples<T> implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -4492494256023436055L;
-	
+
 	private int totalNumItems = -1;
 	private double sampleRate = -1.0;
-	List<T> samplesData;
-	
+//	List<T> samplesData;
+
 	public UniformSamples(int totalNumItems, double sampleRate) {
 		this.totalNumItems = totalNumItems;
 		this.sampleRate = sampleRate;
 	}
-	
-	public void Sample(ArrayList<T> items) {
-		
-		int sampleLen = (int) (totalNumItems * sampleRate);
+
+	public List<T> Sample(ArrayList<T> items) {
+
+		int sampleLen = (int) Math.ceil(totalNumItems * sampleRate);
 //		System.out.println("sampleLen = " + sampleLen);
-		
+
 		Collections.shuffle(items);
-		
-		List<T> samples = new ArrayList<T>(items.subList(0, sampleLen));
-		
-		this.samplesData = samples;
-		
+
+		return new ArrayList<T>(items.subList(0, sampleLen));
 	}
-	
-	public void setSamples(List<T> samplesData) {
-		this.samplesData = samplesData;
-	}
-	
+
+
+//	public void setSamples(List<T> samplesData) {
+//		this.samplesData = samplesData;
+//	}
+
 	public int getTotalNumItems() {
 		return this.totalNumItems;
 	}
-	
+
 	public double getSampleRate() {
 		return this.sampleRate;
 	}
-	
-	public List<T> getSampleData(){
-		return this.samplesData;
-	}
-	
-	public UniformSamples<T> loadHistByDataList(UniformSamples<T> samples, ArrayList<T> dataList){
-		
-		int sampleLen = (int) (samples.getSampleRate() * samples.getTotalNumItems());
-		Collections.shuffle(dataList);
-		
-		List<T> samplesData = new ArrayList<T>(dataList.subList(0, sampleLen));
-		samples.setSamples(samplesData);
-		
-		return samples;
-		
-	}
-	
+
+//	public List<T> getSampleData() {
+//		return this.samplesData;
+//	}
+
+//	public UniformSamples<T> loadSampleByDataList(UniformSamples<T> samples, ArrayList<T> dataList) {
+//
+//		int sampleLen = (int) (samples.getSampleRate() * samples.getTotalNumItems());
+//		Collections.shuffle(dataList);
+//
+//		List<T> samplesData = new ArrayList<T>(dataList.subList(0, sampleLen));
+//		samples.setSamples(samplesData);
+//
+//		return samples;
+//
+//	}
+
 //	public static void main(String[] args) {
 //		ArrayList<Integer> items = new ArrayList<Integer>();
 //		for (int i=0; i<20; i++) {
@@ -73,5 +71,5 @@ public class UniformSamples<T> implements Serializable {
 //		System.out.println(samples);
 //		System.out.println(samples.size());
 //	}
-	
+
 }

@@ -6,7 +6,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class ProcessingData {
 
@@ -139,7 +146,7 @@ public class ProcessingData {
 		double maxLon = 0;
 		double minLat = 0;
 		double maxLat = 0;
-		
+
 		// load partition are
 		File file = new File(parPath);
 		File inputFile = new File(filePath);
@@ -151,9 +158,9 @@ public class ProcessingData {
 			maxLon = Double.parseDouble(header[1].split(":")[1]);
 			minLat = Double.parseDouble(header[2].split(":")[1]);
 			maxLat = Double.parseDouble(header[3].split(":")[1]);
-			
+
 			reader.close();
-			
+
 			FileWriter myWriter = new FileWriter(parPath, true);
 			reader = new BufferedReader(new FileReader(inputFile));
 			String line = reader.readLine(); // header
@@ -185,43 +192,104 @@ public class ProcessingData {
 		}
 	}
 
+	public static void GeneratedPartitionedData(int numOfLonPar, int numOfLatPar, String folder, String filePath,
+			int totalNumItem, int totalNumItemMin) {
+
+		Random rand = new Random();
+		double lonStart = 0.0;
+		double latStart = 0.0;
+		// rangeMin + (rangeMax - rangeMin) * rand
+//		double lonGap = 5 + (15 - 5) * rand.nextDouble();
+//		double lonGap = 0.0;
+//		double latGap = 0.0;
+		int numOfPar = numOfLonPar * numOfLatPar;
+		try {
+			FileWriter writer = new FileWriter(folder + numOfPar + "clusters500K.csv");
+			for (int lonId = 0; lonId < numOfLonPar; lonId++) {
+				for (int latId = 0; latId < numOfLatPar; latId++) {
+					// generate range
+					double lonLen = 30 + (60 - 30) * rand.nextDouble();
+					double latLen = 30 + (60 - 30) * rand.nextDouble();
+
+					double lonEnd = lonLen + lonStart;
+					double latEnd = latLen + latStart;
+
+					// process the data
+					BufferedReader reader = new BufferedReader(new FileReader(filePath));
+//					String[] header = reader.readLine().split(",");
+//					int numOfItems = rand.nextInt((totalNumItem - totalNumItemMin) + 1) + totalNumItemMin;
+					for (int i = 0; i < totalNumItem; i++) {
+						String line = reader.readLine();
+						String[] tem = line.split(",");
+						double x = Double.parseDouble(tem[0]);
+						double y = Double.parseDouble(tem[1]);
+
+						double newX = x * lonLen + lonStart;
+						double newY = y * latLen + latStart;
+						writer.write(newX + "," + newY + "\n");
+					}
+
+					// generate gap
+					double lonGap = 30 + (60 - 30) * rand.nextDouble();
+					double latGap = 30 + (60 - 30) * rand.nextDouble();
+					lonStart = lonEnd + lonGap;
+					latStart = latEnd + latGap;
+
+					System.out.println("Write " + totalNumItem + " objects.");
+				}
+			}
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	public static void ShuffleFile(String inputPath, String outputPath) {
+		String[] result = null;
+		try (Stream<String> stream = Files.lines(Paths.get(inputPath))) {
+			result = stream.toArray(String[]::new);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		List<String> list = Arrays.asList(result);
+//		System.out.println(result);
+		Collections.shuffle(list);
+//		System.out.println(result);
+		
+		try {
+			FileWriter writer = new FileWriter(outputPath);
+			for (String str: list) {
+				writer.write(str + "\n");
+			}
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+
+	}
+
 	public static void main(String[] args) {
 
-		String folder = "/Users/xin_aurora/Downloads/Work/2019/UCR/Research/Spatial/sketches/data/real-world/";
-//		String inputPath = folder + "/sample/osm21_pois_sample.csv";
-//		String inputPath = folder + "osm21_pois.csv";
-//		String outputPath = folder + "osm21_pois_coords.csv";
-		String outputPath = folder + "wildfiredb_coords.csv";
-
-//		ExtractData(inputPath, outputPath);
-//		GetBoundary(outputPath);
-
-//		String outputFolder = folder + "osm21_pois/";
-//		double minlon = -180.0;
-//		double maxlon = 180.0;
-//		double minlat = -90.0;
-//		double maxlat = 90.0;
-//		int lonNumPar = 10;
-//		int latNumPar = 4;
-		String outputFolder = folder + "wildfiredb/";
-		double minlon = -124.66016074688953;
-		double maxlon = -66.99431782299374;
-		double minlat = 24.56637998036461;
-		double maxlat = 48.99404003120753;
-		int lonNumPar = 3;
-		int latNumPar = 3;
-		PartitionGenerator(outputFolder, minlon, maxlon, minlat, maxlat, lonNumPar, latNumPar);
-
-//		String filePath = "/Users/xin_aurora/Downloads/Work/2019/UCR/Research/Spatial/sketches/data/real-world/wildfiredb_coords.csv";
-//		String parPath = "/Users/xin_aurora/Downloads/Work/2019/UCR/Research/Spatial/sketches/data/real-world/wildfiredb/p0.csv";
-//		for (int i = 0; i < args.length; i++) {
-//			if (args[i].equals("-filePath")) {
-//				filePath = args[++i];
-//			} else if (args[i].equals("-parPath")) {
-//				parPath = args[++i];
-//			}
-//		}
-//		FillPartition(filePath, parPath);
+		String folder = "/Users/xin_aurora/Downloads/Work/2019/"
+				+ "UCR/Research/Spatial/sketches/vldb2024/expData/point/";
+//		String filePath = folder + "uniform.csv";
+//
+//		int numOfLonPar = 5;
+//		int numOfLatPar = 3;
+//
+//		int totalNumItem = 500000;
+//		int totalNumItemMin = 5000;
+//
+//		GeneratedPartitionedData(numOfLonPar, numOfLatPar, folder, filePath, totalNumItem, totalNumItemMin);
+		String inputFile = folder + "15clusters500K.csv";
+		String outputFile = folder + "15clusters500K-shuffle.csv";
+		ShuffleFile(inputFile, outputFile);
 	}
 
 }

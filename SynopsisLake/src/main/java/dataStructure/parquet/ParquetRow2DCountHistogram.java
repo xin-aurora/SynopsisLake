@@ -10,6 +10,7 @@ public class ParquetRow2DCountHistogram extends ParquetRow implements Serializab
 	 */
 	private static final long serialVersionUID = -2281170224736444961L;
 	
+	private int[] dimensionSizes = new int[2];
 	private double[] shapes = new double[2]; // bucket len for d1, d2, ...
 	private double[][] counts; // synopsis for d1, d2, ...
 	
@@ -19,6 +20,7 @@ public class ParquetRow2DCountHistogram extends ParquetRow implements Serializab
 	}
 	
 	public void setRange(int[] dimensionSizes, double[] range) {
+		this.dimensionSizes = dimensionSizes;
 		this.ranges = range;
 		this.counts = new double[dimensionSizes[0]][dimensionSizes[1]];
 	}
@@ -29,6 +31,10 @@ public class ParquetRow2DCountHistogram extends ParquetRow implements Serializab
 	
 	public void setCount(double[][] counts) {
 		this.counts = counts;
+	}
+	
+	public int[] getDimensionSizes() {
+		return this.dimensionSizes;
 	}
 	
 	public double[] getShape() {

@@ -26,6 +26,10 @@ public class ParquetRowUniformSamples<T> extends ParquetRow implements Serializa
 		samples.toArray(sampleData);
 	}
 	
+//	public void setSampleData(double[][] samples) {
+//		this.sampleData = samples;
+//	}
+	
 	public double getSampleRatio() {
 		return sampleRatio;
 	}

@@ -233,7 +233,10 @@ public class GeometricHistogramOpt implements Serializable {
 					
 				}
 			}
-		}
+		} 
+//		else {
+//			System.out.println("out of range");
+//		}
 	}
 
 	private void fillCell(GHCell cell, int lonIdx, int latIdx) {
@@ -660,19 +663,19 @@ public class GeometricHistogramOpt implements Serializable {
 	
 	public GeometricHistogramOpt loadHistByDataArray(GeometricHistogramOpt hist, double[][] dataArray) {
 
-		boolean testLoad = false;
-		if (dataArray[0].length == 2) {
-			testLoad = true;
-		}
+//		boolean testLoad = false;
+//		if (dataArray[0].length == 2) {
+//			testLoad = true;
+//		}
 		for (int i = 0; i < dataArray.length; i++) {
 //			hist.addRecord(dataArray[i][0], dataArray[i][1]);
-			if (testLoad) {
-				hist.addRecord(dataArray[i][0], dataArray[i][1],
-						dataArray[i][0], dataArray[i][1]);
-			} else {
+//			if (testLoad) {
+//				hist.addRecord(dataArray[i][0], dataArray[i][1],
+//						dataArray[i][0], dataArray[i][1]);
+//			} else {
 				hist.addRecord(dataArray[i][0], dataArray[i][1],
 						dataArray[i][2], dataArray[i][3]);
-			}
+//			}
 		}
 
 		return hist;
@@ -694,7 +697,7 @@ public class GeometricHistogramOpt implements Serializable {
 	
 	public GeometricHistogramOpt loadHistByDataFile(GeometricHistogramOpt hist, List<double[]> allDataArray) {
 
-		System.out.println(allDataArray.size());
+//		System.out.println(allDataArray.size());
 		for (int i = 0; i < allDataArray.size(); i++) {
 //			hist.addRecord(allDataArray.get(i)[0], allDataArray.get(i)[1],
 //					allDataArray.get(i)[2], allDataArray.get(i)[3]);
@@ -730,6 +733,7 @@ public class GeometricHistogramOpt implements Serializable {
 	}
 	
 	public void aggregateHistogramSep(GeometricHistogramOpt src) {
+		this.totalN += src.totalN;
 		double[][] srcCount = src.getCount();
 		double[][] srcRatioArea = src.getArea();
 		double[][] srcRatioH = src.getRatioH();

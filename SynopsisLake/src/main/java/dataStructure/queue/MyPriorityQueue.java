@@ -25,6 +25,9 @@ public class MyPriorityQueue<E extends Comparable<? super E>> {
 
 	// key is the element, value is the pos in elements[]
 	private HashMap<Object, Integer> elementPosMap;
+	
+	// key is element hash key, value is element
+	private HashMap<Integer, Object> idToElementMap;
 
 	public MyPriorityQueue() {
 		this(DEFAULT_INITIAL_CAPACITY);
@@ -37,6 +40,7 @@ public class MyPriorityQueue<E extends Comparable<? super E>> {
 
 		elements = new Object[capacity];
 		elementPosMap = new HashMap<Object, Integer>();
+		idToElementMap = new HashMap<Integer, Object>();
 	}
 
 	public void updatePriority(E newElement, boolean down) {
@@ -90,6 +94,7 @@ public class MyPriorityQueue<E extends Comparable<? super E>> {
 	}
 
 	public void add(E newElement) {
+		idToElementMap.put(newElement.hashCode(), newElement);
 		if (numberOfElements == elements.length) {
 			grow();
 		}
@@ -105,6 +110,7 @@ public class MyPriorityQueue<E extends Comparable<? super E>> {
 		// moves this last element to its new position.
 		siftDown(lastElement);
 		elementPosMap.remove(result);
+		idToElementMap.remove(result.hashCode());
 		return result;
 	}
 
@@ -127,6 +133,7 @@ public class MyPriorityQueue<E extends Comparable<? super E>> {
 
 	public void clear() {
 		elementPosMap.clear();
+		idToElementMap.clear();
 		elements = new Object[DEFAULT_INITIAL_CAPACITY];
 	}
 
@@ -136,6 +143,10 @@ public class MyPriorityQueue<E extends Comparable<? super E>> {
 
 	public HashMap<Object, Integer> getMap() {
 		return elementPosMap;
+	}
+	
+	public HashMap<Integer, Object> getIdMap() {
+		return idToElementMap;
 	}
 
 	public Object[] getArray() {

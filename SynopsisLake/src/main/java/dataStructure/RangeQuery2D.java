@@ -1,6 +1,8 @@
 package dataStructure;
 
-public class RangeQuery2D {
+import java.io.Serializable;
+
+public class RangeQuery2D implements Serializable{
 
 	public double minLon;
 	public double maxLon;
@@ -29,7 +31,7 @@ public class RangeQuery2D {
 	
 	@Override
 	public final String toString() {
-		return minLon + "," + minLat + "," + maxLon + ","+ maxLat + "," + ans + ",";
+		return minLon + "," + minLat + "," + maxLon + ","+ maxLat + "," + ans;
 	}
 	
 //	public final String toString() {

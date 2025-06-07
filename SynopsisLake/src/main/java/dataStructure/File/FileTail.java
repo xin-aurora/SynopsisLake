@@ -9,7 +9,7 @@ public class FileTail {
 	 * 
 	 * Tail: Data Range ; Synopsis Info ; Synopsis Header ; Tail Length
 	 * 
-	 * Header example:
+	 * Tail example:
 	 * minLon, maxLon, minLat, maxLat ;
 	 * first line of synopsis, Synopsis type, ... , first line of synopsis, Synopsis type;
 	 * Synopsis header

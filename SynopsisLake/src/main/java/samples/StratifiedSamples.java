@@ -42,8 +42,7 @@ public class StratifiedSamples implements Serializable {
 			int sampleLen = parCounts[pId];
 			
 			UniformSamples<Double> samplesModel = new UniformSamples<>(sampleLen, this.sampleRate);
-			samplesModel.Sample(partitionedItem.get(pId));
-			samples.add(samplesModel.getSampleData());
+			samples.add(samplesModel.Sample(partitionedItem.get(pId)));
 		}
 		
 		return samples;

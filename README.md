@@ -1,7 +1,7 @@
 # SynopsisLake
-The is a temporary repository for VLDB 2024 submission
+The is a temporary repository for SIGSPATIAL 2025 submission
 
-## Run experiment
+## Run loading experiment
 To run the loading experiment:
 
 Please first compile the project:
@@ -17,3 +17,6 @@ Or open the source code to run SynopsisOverheadExp.java
 The path to the file: 
 
 /src/main/java/SynopsisLake/SynopsisOverheadExp.java
+
+## Run query performance experiment
+/src/main/java/sigspatial25/*

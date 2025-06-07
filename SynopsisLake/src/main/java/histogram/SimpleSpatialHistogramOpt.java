@@ -3,7 +3,10 @@ package histogram;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import org.apache.commons.math3.distribution.BetaDistribution;
 
 import dataStructure.CellCellOverlapInfo;
 import utils.UtilsFunction;
@@ -40,8 +43,7 @@ public class SimpleSpatialHistogramOpt implements Serializable {
 	// alignment score
 	double[][] targetAggTotal;
 
-	public SimpleSpatialHistogramOpt(double minLon, double minLat, 
-			double maxLon, double maxLat, int numLonBucket,
+	public SimpleSpatialHistogramOpt(double minLon, double minLat, double maxLon, double maxLat, int numLonBucket,
 			int numLatBucket) {
 		this.minLon = minLon;
 		this.maxLon = maxLon;
@@ -71,7 +73,7 @@ public class SimpleSpatialHistogramOpt implements Serializable {
 
 		this.numLonBucket = numLonBucket;
 		this.numLatBucket = numLatBucket;
-		
+
 		targetAggTotal = new double[numLonBucket][numLatBucket];
 	}
 
@@ -117,7 +119,29 @@ public class SimpleSpatialHistogramOpt implements Serializable {
 		this.numLatBucket = numLatBucket;
 
 		this.standardDeviation = sd;
-		
+
+		targetAggTotal = new double[numLonBucket][numLatBucket];
+	}
+
+	public SimpleSpatialHistogramOpt(double minLon, double minLat, double maxLon, double maxLat, int numLonBucket,
+			int numLatBucket, double[][] data, double[] lons, double[] lats) {
+		this.minLon = minLon;
+		this.maxLon = maxLon;
+		this.minLat = minLat;
+		this.maxLat = maxLat;
+
+		this.data = data;
+		this.lonBoundary = lons;
+		this.latBoundary = lats;
+		// frequency
+		double[] lonFre = new double[numLonBucket + 1];
+		double[] latFre = new double[numLatBucket + 1];
+		frequency.add(lonFre);
+		frequency.add(latFre);
+
+		this.numLonBucket = numLonBucket;
+		this.numLatBucket = numLatBucket;
+
 		targetAggTotal = new double[numLonBucket][numLatBucket];
 	}
 
@@ -171,21 +195,32 @@ public class SimpleSpatialHistogramOpt implements Serializable {
 		if (UtilsFunction.isOverlapPointCell(lonBoundary[0], latBoundary[0], lonBoundary[numLonBucket],
 				latBoundary[numLatBucket], lon, lat)) {
 
-			int idxLon = 1;
-			double cellLon = lonBoundary[idxLon];
-			while (cellLon < lon) {
-				idxLon++;
-				cellLon = lonBoundary[idxLon];
+//			int idxLon = 1;
+//			double cellLon = lonBoundary[idxLon];
+//			while (cellLon < lon) {
+//				idxLon++;
+//				cellLon = lonBoundary[idxLon];
+//			}
+//			int idxLat = 1;
+//			double cellLat = latBoundary[idxLat];
+//			while (cellLat < lat) {
+//				idxLat++;
+//				cellLat = latBoundary[idxLat];
+//			}
+//			data[idxLon-1][idxLat-1] += 1;
+//			frequency.get(0)[idxLon-1] += 1;
+//			frequency.get(1)[idxLat-1] += 1;
+			int idxLon = UtilsFunctionHistogram.FirstBiggerSearch(lon, lonBoundary);
+			if (idxLon == data.length) {
+				idxLon--;
 			}
-			int idxLat = 1;
-			double cellLat = latBoundary[idxLat];
-			while (cellLat < lat) {
-				idxLat++;
-				cellLat = latBoundary[idxLat];
+			int idxLat = UtilsFunctionHistogram.FirstBiggerSearch(lat, latBoundary);
+			if (idxLat == data[0].length) {
+				idxLat--;
 			}
-			data[idxLon - 1][idxLat - 1] += 1;
-			frequency.get(0)[idxLon - 1] += 1;
-			frequency.get(1)[idxLat - 1] += 1;
+			data[idxLon][idxLat] += 1;
+			frequency.get(0)[idxLon] += 1;
+			frequency.get(1)[idxLat] += 1;
 			totalN++;
 		}
 	}
@@ -217,29 +252,32 @@ public class SimpleSpatialHistogramOpt implements Serializable {
 				double cellMinLat = latBoundary[minIdxLat];
 				int idxLatStart = minIdxLat + 1;
 				if (idxLatStart >= latBoundary.length) {
-					System.out.println("qMinLat = " + qMinLat + ", minLat = " + minLat + ", maxLat = "
-							+ maxLat);
+					System.out.println("qMinLat = " + qMinLat + ", minLat = " + minLat + ", maxLat = " + maxLat);
 				}
 				double cellMaxLat = latBoundary[idxLatStart];
-				
+
 				while ((cellMaxLat < qMaxLat || cellMinLat < qMaxLat) && idxLatStart <= numLatBucket) {
 					cellMaxLat = latBoundary[idxLatStart];
 
-					double overMinLat = Math.max(qMinLat, cellMinLat);
-					double overMaxLat = Math.min(qMaxLat, cellMaxLat);
-					double mHo = overMaxLat - overMinLat;
+					if (UtilsFunction.isOverlapCellCell(cellMinLon, cellMinLat, cellMaxLon, cellMaxLat, qMinLon,
+							qMinLat, qMaxLon, qMaxLat)) {
+						double overMinLat = Math.max(qMinLat, cellMinLat);
+						double overMaxLat = Math.min(qMaxLat, cellMaxLat);
+						double mHo = overMaxLat - overMinLat;
 
-					// query ans
-					double ratio = mWo * mHo / (cellMaxLon - cellMinLon) / (cellMaxLat - cellMinLat);
+						// query ans
+						double ratio = mWo * mHo / (cellMaxLon - cellMinLon) / (cellMaxLat - cellMinLat);
 
-//					System.out.println("Query = " + qMinLon + "-" + qMaxLon + "," + qMinLat + "-" + qMaxLat);
-//					System.out.println("cell = " + cellMinLon + "-" + cellMaxLon + "," + cellMinLat + "-" + cellMaxLat);
-//					System.out.println("ratio = " + ratio);
+//						System.out.println("Query = " + qMinLon + "-" + qMaxLon + "," + qMinLat + "-" + qMaxLat);
+//						System.out.println("cell = " + cellMinLon + "-" + cellMaxLon + "," + cellMinLat + "-" + cellMaxLat);
+//						System.out.println("ratio = " + ratio);
 
-					if (ratio > 0) {
-						ans += ratio * data[minIdxLon - 1][idxLatStart - 1];
-					} else {
-						break;
+						if (ratio > 0) {
+							ans += ratio * data[minIdxLon - 1][idxLatStart - 1];
+//							System.out.println(ans);
+						} else {
+							break;
+						}
 					}
 
 					idxLatStart++;
@@ -251,6 +289,323 @@ public class SimpleSpatialHistogramOpt implements Serializable {
 		}
 
 		return ans;
+	}
+
+	public double[] RangeQueryWithRatio(BetaDistribution betaDist, double qMinLon, double qMaxLon, double qMinLat,
+			double qMaxLat) {
+
+		if (maxLon <= qMinLon || qMaxLon < minLon || maxLat <= qMinLat || qMaxLat < minLat) {
+//			System.out.println("not in range");
+			return new double[3];
+		} else {
+			double[] answers = new double[5];
+			double ans = 0;
+			ArrayList<Double> overlappingRatios = new ArrayList<Double>();
+			ArrayList<Double> errors = new ArrayList<Double>();
+			double totalRatios = 0;
+//			double errors = 0;
+//			double ratios = 0;
+			int cellCnt = 0;
+
+			int minIdxLon = UtilsFunctionHistogram.FirstBiggerSearch(qMinLon, lonBoundary);
+			int minIdxLat = UtilsFunctionHistogram.FirstBiggerSearch(qMinLat, latBoundary);
+
+			minIdxLon = Math.max(0, minIdxLon);
+			minIdxLat = Math.max(0, minIdxLat);
+
+//			System.out.println("minIdxLon = " + minIdxLon + ", minIdxLat = " + minIdxLat);
+			double cellMinLon = lonBoundary[minIdxLon];
+			minIdxLon++;
+			double cellMaxLon = lonBoundary[minIdxLon];
+
+			while ((cellMaxLon < qMaxLon || cellMinLon < qMaxLon) && minIdxLon <= numLonBucket) {
+				cellMaxLon = lonBoundary[minIdxLon];
+
+				double overMinLon = Math.max(qMinLon, cellMinLon);
+				double overMaxLon = Math.min(qMaxLon, cellMaxLon);
+				double mWo = overMaxLon - overMinLon;
+
+				double cellMinLat = latBoundary[minIdxLat];
+				int idxLatStart = minIdxLat + 1;
+//				if (idxLatStart >= latBoundary.length) {
+//					System.out.println("qMinLat = " + qMinLat
+//							+ ", qMaxLat = " + qMaxLat + ", minLat = " + minLat + ", maxLat = " + maxLat);
+//					System.out.println("idxLatStart " + idxLatStart + ", " + latBoundary.length);
+//					System.out.println();
+//				}
+				double cellMaxLat = latBoundary[idxLatStart];
+
+				while ((cellMaxLat < qMaxLat || cellMinLat < qMaxLat) && idxLatStart <= numLatBucket) {
+					cellMaxLat = latBoundary[idxLatStart];
+
+					if (UtilsFunction.isOverlapCellCell(cellMinLon, cellMinLat, cellMaxLon, cellMaxLat, qMinLon,
+							qMinLat, qMaxLon, qMaxLat)) {
+						double overMinLat = Math.max(qMinLat, cellMinLat);
+						double overMaxLat = Math.min(qMaxLat, cellMaxLat);
+						double mHo = overMaxLat - overMinLat;
+
+						// query ans
+						double ratio = mWo * mHo / (cellMaxLon - cellMinLon) / (cellMaxLat - cellMinLat);
+//						double srcCellData = data[minIdxLon - 1][idxLatStart - 1];
+//						System.out.println("Query = " + qMinLon + "-" + qMaxLon + "," + qMinLat + "-" + qMaxLat);
+//						System.out.println("cell = " + cellMinLon + "-" + cellMaxLon + "," + cellMinLat + "-" + cellMaxLat);
+//						System.out.println("ratio = " + ratio);
+
+						if (ratio > 0) {
+							ans += ratio * data[minIdxLon - 1][idxLatStart - 1];
+//							System.out.println(ans);
+							
+							overlappingRatios.add(ratio);
+							totalRatios += ratio;
+							double er = UtilsFunction.BetaDistErrorRatio(betaDist, ratio);
+							errors.add(er);
+//							System.out.println("ratio = " + ratio + ", er = " + er);
+//							errorRatio += er;
+//							double error = er * ratio * data[minIdxLon - 1][idxLatStart - 1];
+//							errors += error;
+							cellCnt++;
+						} else {
+							break;
+						}
+					}
+
+					idxLatStart++;
+					cellMinLat = cellMaxLat;
+				}
+				minIdxLon++;
+				cellMinLon = cellMaxLon;
+			}
+			double totalErrorRatio = 0.0;
+			for (int i=0; i<overlappingRatios.size(); i++) {
+				totalErrorRatio += overlappingRatios.get(i) / totalRatios * errors.get(i);
+			}
+			answers[0] = ans;
+			answers[1] = 0.0;
+			answers[2] = totalErrorRatio;
+			answers[3] = totalRatios;
+			answers[4] = cellCnt;
+			return answers;
+		}
+	}
+	
+	public ArrayList<Double> RangeQueryGetDensity(double qMinLon, double qMaxLon, double qMinLat,
+			double qMaxLat) {
+
+		if (maxLon <= qMinLon || qMaxLon < minLon || maxLat <= qMinLat || qMaxLat < minLat) {
+//			System.out.println("not in range");
+			return null;
+		} else {
+			ArrayList<Double> densities = new ArrayList<Double>();
+
+			int minIdxLon = UtilsFunctionHistogram.FirstBiggerSearch(qMinLon, lonBoundary);
+			int minIdxLat = UtilsFunctionHistogram.FirstBiggerSearch(qMinLat, latBoundary);
+
+			minIdxLon = Math.max(0, minIdxLon);
+			minIdxLat = Math.max(0, minIdxLat);
+
+//			System.out.println("minIdxLon = " + minIdxLon + ", minIdxLat = " + minIdxLat);
+			double cellMinLon = lonBoundary[minIdxLon];
+			minIdxLon++;
+			double cellMaxLon = lonBoundary[minIdxLon];
+
+			while ((cellMaxLon < qMaxLon || cellMinLon < qMaxLon) && minIdxLon <= numLonBucket) {
+				cellMaxLon = lonBoundary[minIdxLon];
+
+				double overMinLon = Math.max(qMinLon, cellMinLon);
+				double overMaxLon = Math.min(qMaxLon, cellMaxLon);
+				double mWo = overMaxLon - overMinLon;
+
+				double cellMinLat = latBoundary[minIdxLat];
+				int idxLatStart = minIdxLat + 1;
+//				if (idxLatStart >= latBoundary.length) {
+//					System.out.println("qMinLat = " + qMinLat
+//							+ ", qMaxLat = " + qMaxLat + ", minLat = " + minLat + ", maxLat = " + maxLat);
+//					System.out.println("idxLatStart " + idxLatStart + ", " + latBoundary.length);
+//				}
+				double cellMaxLat = latBoundary[idxLatStart];
+
+				while ((cellMaxLat < qMaxLat || cellMinLat < qMaxLat) && idxLatStart <= numLatBucket) {
+					cellMaxLat = latBoundary[idxLatStart];
+
+					if (UtilsFunction.isOverlapCellCell(cellMinLon, cellMinLat, cellMaxLon, cellMaxLat, qMinLon,
+							qMinLat, qMaxLon, qMaxLat)) {
+						double overMinLat = Math.max(qMinLat, cellMinLat);
+						double overMaxLat = Math.min(qMaxLat, cellMaxLat);
+						double mHo = overMaxLat - overMinLat;
+
+						// query ans
+						double ratio = mWo * mHo / (cellMaxLon - cellMinLon) / (cellMaxLat - cellMinLat);
+						double srcCellData = data[minIdxLon - 1][idxLatStart - 1];
+//						System.out.println("Query = " + qMinLon + "-" + qMaxLon + "," + qMinLat + "-" + qMaxLat);
+//						System.out.println("cell = " + cellMinLon + "-" + cellMaxLon + "," + cellMinLat + "-" + cellMaxLat);
+//						System.out.println("ratio = " + ratio);
+
+//						if (ratio > 0 && srcCellData > 0) {
+						if (ratio > 0) {
+							// put src cell into the densities
+							double density = srcCellData / (cellMaxLon - cellMinLon) / (cellMaxLat - cellMinLat);
+							densities.add(density);
+						} else {
+							break;
+						}
+					}
+
+					idxLatStart++;
+					cellMinLat = cellMaxLat;
+				}
+				minIdxLon++;
+				cellMinLon = cellMaxLon;
+			}
+
+			return densities;
+		}
+	}
+	
+	public ArrayList<int[]> RangeQueryGetOverlappingCells(double qMinLon, double qMaxLon, double qMinLat,
+			double qMaxLat) {
+
+		if (maxLon <= qMinLon || qMaxLon < minLon || maxLat <= qMinLat || qMaxLat < minLat) {
+//			System.out.println("not in range");
+			return null;
+		} else {
+			ArrayList<int[]> overlappingCells = new ArrayList<int[]>();
+
+			int minIdxLon = UtilsFunctionHistogram.FirstBiggerSearch(qMinLon, lonBoundary);
+			int minIdxLat = UtilsFunctionHistogram.FirstBiggerSearch(qMinLat, latBoundary);
+
+			minIdxLon = Math.max(0, minIdxLon);
+			minIdxLat = Math.max(0, minIdxLat);
+
+//			System.out.println("minIdxLon = " + minIdxLon + ", minIdxLat = " + minIdxLat);
+			double cellMinLon = lonBoundary[minIdxLon];
+			minIdxLon++;
+			double cellMaxLon = lonBoundary[minIdxLon];
+
+			while ((cellMaxLon < qMaxLon || cellMinLon < qMaxLon) && minIdxLon <= numLonBucket) {
+				cellMaxLon = lonBoundary[minIdxLon];
+
+				double overMinLon = Math.max(qMinLon, cellMinLon);
+				double overMaxLon = Math.min(qMaxLon, cellMaxLon);
+				double mWo = overMaxLon - overMinLon;
+
+				double cellMinLat = latBoundary[minIdxLat];
+				int idxLatStart = minIdxLat + 1;
+//				if (idxLatStart >= latBoundary.length) {
+//					System.out.println("qMinLat = " + qMinLat
+//							+ ", qMaxLat = " + qMaxLat + ", minLat = " + minLat + ", maxLat = " + maxLat);
+//					System.out.println("idxLatStart " + idxLatStart + ", " + latBoundary.length);
+//				}
+				double cellMaxLat = latBoundary[idxLatStart];
+
+				while ((cellMaxLat < qMaxLat || cellMinLat < qMaxLat) && idxLatStart <= numLatBucket) {
+					cellMaxLat = latBoundary[idxLatStart];
+
+					if (UtilsFunction.isOverlapCellCell(cellMinLon, cellMinLat, cellMaxLon, cellMaxLat, qMinLon,
+							qMinLat, qMaxLon, qMaxLat)) {
+						double overMinLat = Math.max(qMinLat, cellMinLat);
+						double overMaxLat = Math.min(qMaxLat, cellMaxLat);
+						double mHo = overMaxLat - overMinLat;
+
+						// query ans
+						double ratio = mWo * mHo / (cellMaxLon - cellMinLon) / (cellMaxLat - cellMinLat);
+//						double srcCellData = data[minIdxLon - 1][idxLatStart - 1];
+//						System.out.println("Query = " + qMinLon + "-" + qMaxLon + "," + qMinLat + "-" + qMaxLat);
+//						System.out.println("cell = " + cellMinLon + "-" + cellMaxLon + "," + cellMinLat + "-" + cellMaxLat);
+//						System.out.println("ratio = " + ratio);
+
+//						if (ratio > 0 && srcCellData > 0) {
+						if (ratio > 0) {
+							// put src cell into the densities
+							int[] cellPos = {minIdxLon, idxLatStart};
+							overlappingCells.add(cellPos);
+						} else {
+							break;
+						}
+					}
+
+					idxLatStart++;
+					cellMinLat = cellMaxLat;
+				}
+				minIdxLon++;
+				cellMinLon = cellMaxLon;
+			}
+
+			return overlappingCells;
+		}
+	}
+	
+	public ArrayList<Double> RangeQueryGetOverlappingRatios(double qMinLon, double qMaxLon, double qMinLat,
+			double qMaxLat) {
+
+		if (maxLon <= qMinLon || qMaxLon < minLon || maxLat <= qMinLat || qMaxLat < minLat) {
+//			System.out.println("not in range");
+			return null;
+		} else {
+			ArrayList<Double> overlappingRatios = new ArrayList<Double>();
+			double totalOverlappingRatios = 0.0;
+			int minIdxLon = UtilsFunctionHistogram.FirstBiggerSearch(qMinLon, lonBoundary);
+			int minIdxLat = UtilsFunctionHistogram.FirstBiggerSearch(qMinLat, latBoundary);
+
+			minIdxLon = Math.max(0, minIdxLon);
+			minIdxLat = Math.max(0, minIdxLat);
+
+//			System.out.println("minIdxLon = " + minIdxLon + ", minIdxLat = " + minIdxLat);
+			double cellMinLon = lonBoundary[minIdxLon];
+			minIdxLon++;
+			double cellMaxLon = lonBoundary[minIdxLon];
+
+			while ((cellMaxLon < qMaxLon || cellMinLon < qMaxLon) && minIdxLon <= numLonBucket) {
+				cellMaxLon = lonBoundary[minIdxLon];
+
+				double overMinLon = Math.max(qMinLon, cellMinLon);
+				double overMaxLon = Math.min(qMaxLon, cellMaxLon);
+				double mWo = overMaxLon - overMinLon;
+
+				double cellMinLat = latBoundary[minIdxLat];
+				int idxLatStart = minIdxLat + 1;
+//				if (idxLatStart >= latBoundary.length) {
+//					System.out.println("qMinLat = " + qMinLat
+//							+ ", qMaxLat = " + qMaxLat + ", minLat = " + minLat + ", maxLat = " + maxLat);
+//					System.out.println("idxLatStart " + idxLatStart + ", " + latBoundary.length);
+//				}
+				double cellMaxLat = latBoundary[idxLatStart];
+
+				while ((cellMaxLat < qMaxLat || cellMinLat < qMaxLat) && idxLatStart <= numLatBucket) {
+					cellMaxLat = latBoundary[idxLatStart];
+
+					if (UtilsFunction.isOverlapCellCell(cellMinLon, cellMinLat, cellMaxLon, cellMaxLat, qMinLon,
+							qMinLat, qMaxLon, qMaxLat)) {
+						double overMinLat = Math.max(qMinLat, cellMinLat);
+						double overMaxLat = Math.min(qMaxLat, cellMaxLat);
+						double mHo = overMaxLat - overMinLat;
+
+						// query ans
+						double ratio = mWo * mHo / (cellMaxLon - cellMinLon) / (cellMaxLat - cellMinLat);
+//						double srcCellData = data[minIdxLon - 1][idxLatStart - 1];
+//						System.out.println("Query = " + qMinLon + "-" + qMaxLon + "," + qMinLat + "-" + qMaxLat);
+//						System.out.println("cell = " + cellMinLon + "-" + cellMaxLon + "," + cellMinLat + "-" + cellMaxLat);
+//						System.out.println("ratio = " + ratio);
+
+//						if (ratio > 0 && srcCellData > 0) {
+						if (ratio > 0) {
+							overlappingRatios.add(ratio);
+							totalOverlappingRatios += ratio;
+						} else {
+							break;
+						}
+					}
+
+					idxLatStart++;
+					cellMinLat = cellMaxLat;
+				}
+				minIdxLon++;
+				cellMinLon = cellMaxLon;
+			}
+			totalOverlappingRatios = totalOverlappingRatios / overlappingRatios.size();
+			Collections.sort(overlappingRatios);
+			overlappingRatios.add(totalOverlappingRatios);
+			return overlappingRatios;
+		}
 	}
 
 	public double[][] getData() {
@@ -267,6 +622,14 @@ public class SimpleSpatialHistogramOpt implements Serializable {
 
 	public double[] getLatBoundary() {
 		return latBoundary;
+	}
+	
+	public double[] getLonFrequency() {
+		return frequency.get(0);
+	}
+
+	public double[] getLatFrequency() {
+		return frequency.get(1);
 	}
 
 	public double getLonUnit() {
@@ -498,12 +861,15 @@ public class SimpleSpatialHistogramOpt implements Serializable {
 							if (mHo > 1.1102230246251565E-10) {
 								// overlap
 								// compute values
+								// TODO: check aggregation
 								double comAreaSource = mWo * mHo / (sMaxLon - sMinLon) / (sMaxLat - sMinLat);
 								data[md - 1][idxT - 1] += srcData[sd - 1][idxS - 1] * comAreaSource;
-//								System.out.println(srcData[sd - 1][idxS - 1]);
-//								System.out.println(md - 1);
-//								System.out.println(idxT - 1);
-//								System.out.println(targetAggTotal[md - 1][idxT - 1]);
+//								System.out.println("src: " + sMinLon + "-" + sMaxLon
+//										+ ", " + sMinLat + "-" + sMaxLat);
+//								System.out.println("des: " + tMinLon + "-" + tMaxLon
+//										+ ", " + tMinLat + "-" + tMaxLat);
+//								System.out.println("comSource=" + comAreaSource + ", srcData=" + srcData[sd - 1][idxS - 1]
+//										+ ", desData=" + comAreaSource * srcData[sd - 1][idxS - 1]);
 								targetAggTotal[md - 1][idxT - 1] += srcData[sd - 1][idxS - 1];
 							}
 						}
