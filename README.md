@@ -19,4 +19,5 @@ The path to the file:
 /src/main/java/SynopsisLake/SynopsisOverheadExp.java
 
 ## Run query performance experiment
+The data and query: https://drive.google.com/drive/folders/1QxHoaMPPadQNXg8pZBb7jPxzGhvLuJDF?usp=sharing
 /src/main/java/sigspatial25/*
